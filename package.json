@@ -7,7 +7,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix"
   },
   "keywords": [],
   "author": "",
@@ -19,11 +21,14 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/express": "^5.0.6",
     "@types/node": "^25.6.0",
+    "eslint": "^9.39.4",
     "nodemon": "^3.1.14",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.0"
   }
 }
