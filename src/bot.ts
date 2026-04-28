@@ -2,7 +2,8 @@ import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { config } from './config.js';
 import { registerReadyEvent } from './events/ready.js';
 import type Command from './types/commandTypes.js';
-import setAllCommands from './tools/command_handler.js';
+import gettAllCommands from './tools/command_handler.js';
+import { registerInteractionCreateEvent } from './events/interaction.js';
 
 declare module 'discord.js' {
   export interface Client {
@@ -22,7 +23,9 @@ export async function createBot() {
   registerReadyEvent(client);
 
   client.commands = new Collection<string, Command>();
-  await setAllCommands(client.commands);
+  await gettAllCommands(client.commands);
+
+  registerInteractionCreateEvent(client);
 
   return client;
 }

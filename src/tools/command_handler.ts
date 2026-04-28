@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { pathToFileURL } from 'url';
+import { dirname } from 'path';
+import { fileURLToPath, pathToFileURL } from 'url';
 import type Command from '../types/commandTypes.js';
 import type { Collection } from 'discord.js';
 
@@ -14,14 +15,16 @@ function isCommand(value: unknown): value is Command {
     );
 }
 
-export default async function setAllCommands(commands: Collection<string, Command>) {
+export default async function gettAllCommands(commands: Collection<string, Command>) {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
     
-    const commandDirPath = path.join(__dirname, 'commands');
+    const commandDirPath = path.join(__dirname, '..', 'commands');
     const commandFolder = fs.readdirSync(commandDirPath);
 
     for (const folder of commandFolder) {
         const folderPath = path.join(commandDirPath, folder);
-        const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.ts'));
+        const commandFiles = fs.readdirSync(folderPath).filter(file => file.endsWith('.js'));
 
         for (const file of commandFiles) {
             const filePath = path.join(folderPath, file);
