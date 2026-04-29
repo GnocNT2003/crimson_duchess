@@ -1,6 +1,6 @@
 import type { ChatInputCommandInteraction, Collection } from "discord.js";
-import { SlashCommandBuilder } from "discord.js";
 import type Command from "../../types/commandTypes.js";
+import { SlashCommandBuilder } from "discord.js";
 
 function formatCommandInfo(command: Command): string {
     const name = command.data.name;

@@ -19,19 +19,6 @@ function getDownloadsDir(): string {
     return dir;
 }
 
-function extractFilename(contentDisposition: string, fallbackUrl: string): string {
-    const match = contentDisposition.match(/filename\*?=(?:UTF-8'')?([^;\n]+)/i);
-    if (match) {
-        try {
-            return decodeURIComponent(match[1].replace(/['"]/g, '').trim());
-        } catch {
-            return match[1].replace(/['"]/g, '').trim();
-        }
-    }
-    const urlPath = new URL(fallbackUrl).pathname;
-    return path.basename(urlPath) || `document_${Date.now()}.pdf`;
-}
-
 const SEPARATOR = `[crawl] ${'─'.repeat(60)}`;
 
 function log(message: string): void {
@@ -51,70 +38,26 @@ async function crawlAndDownload(pageUrl: string, downloadsDir: string): Promise<
         await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
         log(`Page loaded: ${page.url()}`);
 
-        // Strategy 1: find a PDF URL embedded in the page (iframe/embed/object/anchor)
-        log(`Scanning page for embedded PDF URL`);
-        const embeddedPdfUrl = await page.evaluate((): string | null => {
-            const selectors: string[] = [
-                'embed[src]',
-                'object[data]',
-                'iframe[src]',
-                'a[href]',
-            ];
-            for (const sel of selectors) {
-                for (const el of Array.from(document.querySelectorAll(sel))) {
-                    const src =
-                        el instanceof HTMLObjectElement
-                            ? el.data
-                            : el instanceof HTMLAnchorElement
-                              ? el.href
-                              : (el as HTMLIFrameElement | HTMLEmbedElement).src;
-                    if (src && /\.pdf(\?|#|$)/i.test(src)) return src;
-                }
-            }
-            return null;
+        const docLink = await page.evaluate(() => {
+            const link = document.querySelectorAll('a.view-file')[0] as HTMLAnchorElement | undefined;
+            return link?.href || null;
         });
-
-        if (embeddedPdfUrl) {
-            log(`Found embedded PDF URL: ${embeddedPdfUrl}`);
-            log(`Fetching PDF via request`);
-            const response = await page.request.get(embeddedPdfUrl);
-            if (!response.ok()) throw new Error(`HTTP ${response.status()} fetching PDF`);
-            const buffer = await response.body();
-            log(`Received ${buffer.byteLength} bytes`);
-            const filename = extractFilename(
-                response.headers()['content-disposition'] ?? '',
-                embeddedPdfUrl,
-            );
-            const safeName = /\.pdf$/i.test(filename) ? filename : `${filename}.pdf`;
-            const savePath = path.join(downloadsDir, safeName);
-            fs.writeFileSync(savePath, buffer);
-            log(`Saved to ${savePath}`);
-            return safeName;
+        if (!docLink) {
+            throw new Error('No PDF link found on the page.');
         }
 
-        // Strategy 2: click a download button/link and intercept the download event
-        log(`No embedded PDF found, looking for download button`);
-        const downloadTrigger = await page.$(
-            '[class*="download" i], [id*="download" i], ' +
-            'a:has-text("Tải về"), a:has-text("Tải xuống"), a:has-text("Tải"), ' +
-            'button:has-text("Tải")',
-        );
-
-        if (downloadTrigger) {
-            log(`Found download trigger, clicking`);
-            const downloadPromise = page.waitForEvent('download');
-            await downloadTrigger.click();
-            log(`Waiting for download event`);
-            const download = await downloadPromise;
-            const filename = download.suggestedFilename() || `document_${Date.now()}.pdf`;
-            const savePath = path.join(downloadsDir, filename);
-            log(`Download started: ${filename}`);
-            await download.saveAs(savePath);
-            log(`Saved to ${savePath}`);
-            return filename;
+        const response = await fetch(docLink);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch document: ${response.status} ${response.statusText}`);
         }
+        log(`Found document link: ${docLink}`);
 
-        throw new Error('No PDF link or download button found on the page.');
+        const buffer = await response.arrayBuffer();
+        const filename = docLink.split('/').pop() || `document_${Date.now()}.pdf`;
+        log(`Downloading document as ${filename}`);
+        fs.writeFileSync(path.join(downloadsDir, filename), Buffer.from(buffer));
+
+        return filename;
     } finally {
         log(`Closing browser`);
         await browser.close();
