@@ -1,49 +1,51 @@
 import { EmbedBuilder, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
-import { log, logSep } from "../../tools/logging.js";
+import { createLogger } from "../../tools/logging.js";
 import { chromium } from "playwright";
 
 const ENDFIELD_X_NEWS_URL = "https://x.com/AKEndfield";
+const logger = createLogger("endfield-x-news");
 
-async function fetchLatestNewsLink(commandName: string): Promise<{ url: string, content: string , imageUrl?: string}> {
-    logSep(commandName);
-    log(commandName, `START ${ENDFIELD_X_NEWS_URL}`);
-    log(commandName, `Launching browser`);
+async function fetchLatestNewsLink(): Promise<{ url: string, content: string, imageUrl?: string }> {
+    logger.sep();
+    logger.log(`START ${ENDFIELD_X_NEWS_URL}`);
+    logger.log(`Launching browser`);
     const browser = await chromium.launch({ headless: true });
     try {
         const context = await browser.newContext({ locale: 'vi-VN' });
         const page = await context.newPage();
 
-        log(commandName, `Navigating to ${ENDFIELD_X_NEWS_URL}`);
+        logger.log(`Navigating to ${ENDFIELD_X_NEWS_URL}`);
         await page.goto(ENDFIELD_X_NEWS_URL, { waitUntil: 'load', timeout: 30000 });
-        log(commandName, `Page loaded: ${page.url()}`);
-        
+        logger.log(`Page loaded: ${page.url()}`);
+
         const tweetFeed = page.locator('article.r-1loqt21[data-testid="tweet"]');
         try {
             const tweets = tweetFeed.nth(1);
             await tweets.click();
-            log(commandName, `Clicked on the second tweet to open details.`);
+            logger.log(`Clicked on the second tweet to open details.`);
 
-            const latestNewsLink = page.url().replace(/\/photo\/\d+$/, '');;
-            log(commandName, `Latest news link: ${latestNewsLink}`);
-            
+            const latestNewsLink = page.url().replace(/\/photo\/\d+$/, '');
+            logger.log(`Latest news link: ${latestNewsLink}`);
+
             const newsContent = await page.locator('article div[dir="auto"] span').first().textContent();
+            logger.log(`News content: ${newsContent ? newsContent.trim() : "No content found"}`);
             const imageSrc = await page.locator('article img[alt="Hình ảnh"]').first().getAttribute('src');
+            logger.log(`Image URL: ${imageSrc ? imageSrc : "No image found"}`);
 
-            return { url: latestNewsLink, content: newsContent? newsContent.trim() : "No content found", imageUrl: imageSrc? imageSrc : undefined };
+            return { url: latestNewsLink, content: newsContent ? newsContent.trim() : "No content found", imageUrl: imageSrc ?? undefined };
         }
         catch (error) {
-            log(commandName, `Error occurred while fetching latest news: ${error instanceof Error ? error.message : String(error)}`);
+            logger.log(`Error occurred while fetching latest news: ${error instanceof Error ? error.message : String(error)}`);
             throw error;
         }
     }
     finally {
-        log(commandName, `Closing browser`);
+        logger.log(`Closing browser`);
         await browser.close();
-        logSep(commandName);
+        logger.sep();
     }
-
 }
 
 const endfieldXNewsCommand: Command = {
@@ -54,9 +56,8 @@ const endfieldXNewsCommand: Command = {
     execute: async (interaction: ChatInputCommandInteraction) => {
         await interaction.deferReply();
 
-        
         try {
-            const { url: latestNewsLink, content: newsContent, imageUrl } = await fetchLatestNewsLink(interaction.commandName);
+            const { url: latestNewsLink, content: newsContent, imageUrl } = await fetchLatestNewsLink();
             const embeddedReply = new EmbedBuilder()
                 .setTitle("Arknights Endfield (@AKEndfield)")
                 .setURL(latestNewsLink)

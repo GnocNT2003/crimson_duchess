@@ -6,9 +6,12 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type Command from '../../types/commandTypes.js';
+import { createLogger } from '../../tools/logging.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+const logger = createLogger('crawl');
 
 function getDownloadsDir(): string {
     // src/commands/law -> src/commands -> src -> project root (dev)
@@ -19,24 +22,18 @@ function getDownloadsDir(): string {
     return dir;
 }
 
-const SEPARATOR = `[crawl] ${'─'.repeat(60)}`;
-
-function log(message: string): void {
-    console.log(`[crawl] ${new Date().toISOString()} ${message}`);
-}
-
 async function crawlAndDownload(pageUrl: string, downloadsDir: string): Promise<string> {
-    console.log(SEPARATOR);
-    log(`START ${pageUrl}`);
-    log(`Launching browser`);
+    logger.sep();
+    logger.log(`START ${pageUrl}`);
+    logger.log(`Launching browser`);
     const browser = await chromium.launch({ headless: true });
     try {
         const context = await browser.newContext({ acceptDownloads: true });
         const page = await context.newPage();
 
-        log(`Navigating to ${pageUrl}`);
+        logger.log(`Navigating to ${pageUrl}`);
         await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        log(`Page loaded: ${page.url()}`);
+        logger.log(`Page loaded: ${page.url()}`);
 
         const docLink = await page.evaluate(() => {
             const link = document.querySelectorAll('a.view-file')[0] as HTMLAnchorElement | undefined;
@@ -50,18 +47,18 @@ async function crawlAndDownload(pageUrl: string, downloadsDir: string): Promise<
         if (!response.ok) {
             throw new Error(`Failed to fetch document: ${response.status} ${response.statusText}`);
         }
-        log(`Found document link: ${docLink}`);
+        logger.log(`Found document link: ${docLink}`);
 
         const buffer = await response.arrayBuffer();
         const filename = docLink.split('/').pop() || `document_${Date.now()}.pdf`;
-        log(`Downloading document as ${filename}`);
+        logger.log(`Downloading document as ${filename}`);
         fs.writeFileSync(path.join(downloadsDir, filename), Buffer.from(buffer));
 
         return filename;
     } finally {
-        log(`Closing browser`);
+        logger.log(`Closing browser`);
         await browser.close();
-        console.log(SEPARATOR);
+        logger.sep();
     }
 }
 
@@ -82,7 +79,7 @@ const crawlCommand: Command = {
         try {
             new URL(url);
         } catch {
-            await interaction.reply({ content: 'Invalid URL provided.', 
+            await interaction.reply({ content: 'Invalid URL provided.',
                 flags: MessageFlags.Ephemeral
             });
             return;
