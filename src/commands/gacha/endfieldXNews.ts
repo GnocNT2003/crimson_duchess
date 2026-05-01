@@ -4,75 +4,101 @@ import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
 import { chromium } from "playwright";
 
-const ENDFIELD_X_NEWS_URL = "https://x.com/AKEndfield";
-const logger = createLogger("endfield-x-news");
+const GAME_OPTIONS = [
+    { name: "Genshin Impact",        value: "genshin",  url: "https://x.com/GenshinImpact",    displayName: "Genshin Impact (@GenshinImpact)",         color: 0x4A90D9 },
+    { name: "Honkai Star Rail",       value: "hsr",      url: "https://x.com/HonkaiStarRail",   displayName: "Honkai: Star Rail (@HonkaiStarRail)",      color: 0x9B59B6 },
+    { name: "Zenless Zone Zero",      value: "zzz",      url: "https://x.com/ZZZ_EN",           displayName: "Zenless Zone Zero (@ZZZ_EN)",              color: 0xF39C12 },
+    { name: "Chaos Zero Nightmare",   value: "czn",      url: "https://x.com/ChaosZeroNM",      displayName: "Chaos Zero Nightmare (@ChaosZeroNM)",      color: 0xE74C3C },
+    { name: "Arknights Endfield",     value: "endfield", url: "https://x.com/AKEndfield",       displayName: "Arknights Endfield (@AKEndfield)",         color: 0x1DA1F2 },
+    { name: "Azur Lane",              value: "azurlane", url: "https://x.com/AzurLane_EN",      displayName: "Azur Lane (@AzurLane_EN)",                 color: 0x3498DB },
+] as const;
 
-async function fetchLatestNewsLink(): Promise<{ url: string, content: string, imageUrl?: string }> {
+type GameValue = typeof GAME_OPTIONS[number]["value"];
+
+const GAME_MAP = Object.fromEntries(
+    GAME_OPTIONS.map((g) => [g.value, g])
+) as Record<GameValue, typeof GAME_OPTIONS[number]>;
+
+const logger = createLogger("x-news");
+
+async function fetchLatestTweet(xUrl: string): Promise<{ url: string; content: string; imageUrl?: string }> {
     logger.sep();
-    logger.log(`START ${ENDFIELD_X_NEWS_URL}`);
+    logger.log(`START ${xUrl}`);
     logger.log(`Launching browser`);
     const browser = await chromium.launch({ headless: true });
     try {
-        const context = await browser.newContext({ locale: 'vi-VN' });
+        const context = await browser.newContext({ locale: "vi-VN" });
         const page = await context.newPage();
 
-        logger.log(`Navigating to ${ENDFIELD_X_NEWS_URL}`);
-        await page.goto(ENDFIELD_X_NEWS_URL, { waitUntil: 'load', timeout: 30000 });
+        logger.log(`Navigating to ${xUrl}`);
+        await page.goto(xUrl, { waitUntil: "load", timeout: 30000 });
         logger.log(`Page loaded: ${page.url()}`);
 
         const tweetFeed = page.locator('article.r-1loqt21[data-testid="tweet"]');
         try {
-            const tweets = tweetFeed.nth(1);
-            await tweets.click();
+            const tweet = tweetFeed.nth(1);
+            await tweet.click();
             logger.log(`Clicked on the second tweet to open details.`);
 
-            const latestNewsLink = page.url().replace(/\/photo\/\d+$/, '');
-            logger.log(`Latest news link: ${latestNewsLink}`);
+            const tweetUrl = page.url().replace(/\/photo\/\d+$/, "");
+            logger.log(`Tweet URL: ${tweetUrl}`);
 
-            const newsContent = await page.locator('article div[dir="auto"] span').first().textContent();
-            logger.log(`News content: ${newsContent ? newsContent.trim() : "No content found"}`);
-            const imageSrc = await page.locator('article img[alt="Hình ảnh"]').first().getAttribute('src');
-            logger.log(`Image URL: ${imageSrc ? imageSrc : "No image found"}`);
+            const content = await page.locator('article div[dir="auto"] span').first().textContent();
+            logger.log(`Content: ${content ? content.trim() : "No content found"}`);
 
-            return { url: latestNewsLink, content: newsContent ? newsContent.trim() : "No content found", imageUrl: imageSrc ?? undefined };
-        }
-        catch (error) {
-            logger.log(`Error occurred while fetching latest news: ${error instanceof Error ? error.message : String(error)}`);
+            const imageSrc = await page.locator('article img[alt="Hình ảnh"]').first().getAttribute("src");
+            logger.log(`Image URL: ${imageSrc ?? "No image found"}`);
+
+            return {
+                url: tweetUrl,
+                content: content ? content.trim() : "No content found",
+                imageUrl: imageSrc ?? undefined,
+            };
+        } catch (error) {
+            logger.log(`Error fetching tweet: ${error instanceof Error ? error.message : String(error)}`);
             throw error;
         }
-    }
-    finally {
+    } finally {
         logger.log(`Closing browser`);
         await browser.close();
         logger.sep();
     }
 }
 
-const endfieldXNewsCommand: Command = {
+const xNewsCommand: Command = {
     data: new SlashCommandBuilder()
-        .setName("endfield-x-news")
-        .setDescription("Get the latest news from Arknights Endfield X page."),
+        .setName("x-news")
+        .setDescription("Get the latest news from a gacha game's X page.")
+        .addStringOption((option) =>
+            option
+                .setName("game")
+                .setDescription("The gacha game to fetch news for.")
+                .setRequired(true)
+                .addChoices(...GAME_OPTIONS.map((g) => ({ name: g.name, value: g.value })))
+        ) as SlashCommandBuilder,
 
     execute: async (interaction: ChatInputCommandInteraction) => {
         await interaction.deferReply();
 
+        const gameValue = interaction.options.getString("game", true) as GameValue;
+        const game = GAME_MAP[gameValue];
+
         try {
-            const { url: latestNewsLink, content: newsContent, imageUrl } = await fetchLatestNewsLink();
-            const embeddedReply = new EmbedBuilder()
-                .setTitle("Arknights Endfield (@AKEndfield)")
-                .setURL(latestNewsLink)
-                // .setDescription(newsContent)
-                .setImage(imageUrl || latestNewsLink + "/photo/1")
-                .setThumbnail(imageUrl || latestNewsLink + "/photo/1")
+            const { url: tweetUrl, content, imageUrl } = await fetchLatestTweet(game.url);
+            const embed = new EmbedBuilder()
+                .setTitle(game.displayName)
+                .setURL(tweetUrl)
+                .setImage(imageUrl ?? tweetUrl + "/photo/1")
+                .setThumbnail(imageUrl ?? tweetUrl + "/photo/1")
                 .setTimestamp()
-                .setColor(0x1DA1F2);
-            await interaction.editReply({ content: newsContent, embeds: [embeddedReply] });
+                .setColor(game.color);
+            await interaction.editReply({ content, embeds: [embed] });
         } catch (error) {
             await interaction.editReply(
                 `Failed to fetch latest news: ${error instanceof Error ? error.message : String(error)}`
             );
         }
-    }
-}
+    },
+};
 
-export default endfieldXNewsCommand;
+export default xNewsCommand;
