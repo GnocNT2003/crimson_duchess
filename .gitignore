@@ -1,5 +1,11 @@
+# node_modules and dist directories
 node_modules/
 dist/
+
+# Environment variables
 .env
 *.js.map
+
+# Downloads and temporary files
 downloads/
+temp/
