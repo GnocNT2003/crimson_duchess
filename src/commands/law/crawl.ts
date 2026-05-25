@@ -45,7 +45,6 @@ async function crawlAndDownload(pageUrl: string, downloadsDir: string): Promise<
     } finally {
         logger.log(`Closing browser`);
         await browser.close();
-        logger.sep();
     }
 }
 

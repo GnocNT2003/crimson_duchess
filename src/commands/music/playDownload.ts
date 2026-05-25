@@ -1,49 +1,38 @@
 import { SlashCommandBuilder } from "discord.js";
-import type { AutocompleteInteraction, ChatInputCommandInteraction, Guild } from "discord.js";
+import type { AutocompleteInteraction, ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
 import { getMusicDownloadsFiles, __projectRoot } from "../../tools/filePathResolver.js";
-import { joinVoiceChannel, createAudioPlayer, createAudioResource, NoSubscriberBehavior , getVoiceConnection } from "@discordjs/voice";
-import type { VoiceConnection } from "@discordjs/voice";
+import { createAudioResource } from "@discordjs/voice";
 import path from "path";
-import { config } from '../../config.js';
+import type { Guild } from 'discord.js';
+import { getOrCreateAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceConnect.js";
+import fs from "fs";
 
-const { defaultVoiceChannelId } = config.discord;
 const logger = createLogger("play-download");
-// const availableMusicFiles = getMusicDownloadsFiles().map(file => {
-//     return {
-//         name: file.replace('.mp3', '').slice(0, 100), // Limit the name to 100 characters
-//         value: path.join(__projectRoot, 'downloads', 'musics', file),
-//     };
-// });
 
 function joinChannelAndPlay(filename: string, guild: Guild) {
     logger.sep();
     logger.log('START PLAYDOWNLOAD');
     
     logger.log('Getting current voice connection or joining new voice channel');
-    const connection: VoiceConnection = getVoiceConnection(guild.id) || joinVoiceChannel({
-        channelId: defaultVoiceChannelId,
-        guildId: guild.id,
-        adapterCreator: guild.voiceAdapterCreator,
-        selfMute: false,
-        selfDeaf: false,
-    });
+    const connection = getOrJoinVoiceChannel(guild);
 
     logger.log(`Creating audio player and resource for file: ${filename}`);
-    const player = createAudioPlayer({
-        behaviors: {
-		    noSubscriber: NoSubscriberBehavior.Pause,
-	},
-    });
+    const player = getOrCreateAudioPlayer(guild);
     const filePath = path.join(__projectRoot, 'downloads', 'musics', `${filename}.mp3`);
+    if (!fs.existsSync(filePath)) {
+        logger.log(`Audio file not found: ${filePath}`);
+        throw new Error(`File not found: ${filename}`);
+    }
     const resource = createAudioResource(filePath);
     
     logger.log('Playing audio resource');
     player.play(resource);
     connection.subscribe(player);
-    logger.log('Audio is now playing');
-    logger.sep();
+    // player.on(AudioPlayerStatus.Playing, () => {
+    //     logger.log('Audio player is playing');
+    // });
 };
 
 const playDownloadCommand: Command = {

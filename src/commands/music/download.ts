@@ -56,7 +56,6 @@ async function downloadAudioFromYoutube(url: string, downloadDir: string): Promi
     finally {
         logger.log('Closing browser');
         await browser.close();
-        logger.sep();
     }
 }
 
