@@ -2,29 +2,16 @@ import { MessageFlags, SlashCommandBuilder } from 'discord.js';
 import { chromium } from 'playwright';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import type { ChatInputCommandInteraction } from 'discord.js';
 import type Command from '../../types/commandTypes.js';
 import { createLogger } from '../../tools/logging.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import { getLawDownloadsDir } from '../../tools/filePathResolver.js';
 
 const logger = createLogger('crawl');
 
-function getDownloadsDir(): string {
-    // src/commands/law -> src/commands -> src -> project root (dev)
-    // dist/commands/law -> dist/commands -> dist -> project root (prod)
-    const projectRoot = path.resolve(__dirname, '..', '..', '..');
-    const dir = path.join(projectRoot, 'downloads');
-    fs.mkdirSync(dir, { recursive: true });
-    return dir;
-}
-
 async function crawlAndDownload(pageUrl: string, downloadsDir: string): Promise<string> {
     logger.sep();
-    logger.log(`START ${pageUrl}`);
+    logger.log(`START CRAWL`);
     logger.log(`Launching browser`);
     const browser = await chromium.launch({ headless: true });
     try {
@@ -88,7 +75,7 @@ const crawlCommand: Command = {
         await interaction.deferReply();
 
         try {
-            const downloadsDir = getDownloadsDir();
+            const downloadsDir = getLawDownloadsDir();
             const filename = await crawlAndDownload(url, downloadsDir);
             await interaction.editReply(`PDF downloaded successfully: \`${filename}\``);
         } catch (error) {

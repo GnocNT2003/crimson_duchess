@@ -4,27 +4,16 @@ import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
 import { chromium } from "playwright";
 import { expect } from "playwright/test";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import path from 'path';
-import fs from 'fs';
+import path from "path";
+import { getMusicDownloadsDir } from "../../tools/filePathResolver.js";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const YOUTUBE_AUDIO_CONVERTER_URL = 'https://v3.y2mate.nu/';
 
 const logger = createLogger("download");
 
-function getTempDownloadsDir(): string {
-    const projectRoot = path.resolve(__dirname, '..', '..', '..');
-    const dir = path.join(projectRoot, 'temp');
-    fs.mkdirSync(dir, { recursive: true });
-    return dir;
-}
-
 async function downloadAudioFromYoutube(url: string, downloadDir: string): Promise<string> {
     logger.sep();
-    logger.log(`START downloading audio from ${url}`);
+    logger.log(`START DOWNLOAD`);
     logger.log('Launching browser');
     const browser = await chromium.launch({ headless: true });
     try {
@@ -104,7 +93,7 @@ const downloadCommand: Command = {
         await interaction.deferReply();
 
         try {
-            const downloadsDir = getTempDownloadsDir();
+            const downloadsDir = getMusicDownloadsDir();
             const filename = await downloadAudioFromYoutube(url, downloadsDir);
             await interaction.editReply(`Audio downloaded successfully: \`${filename}\``);
         } catch (error) {
