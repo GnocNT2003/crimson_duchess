@@ -1,6 +1,6 @@
 import { Collection, REST, Routes } from 'discord.js';
 import { config } from './config.js';
-import gettAllCommands from './tools/command_handler.js';
+import gettAllCommands from './tools/commandHandler.js';
 import type Command from './types/commandTypes.js';
 
 export async function deployCommands() {
@@ -13,7 +13,6 @@ export async function deployCommands() {
     const commandData = commands.map(command => command.data.toJSON());
 
     const rest = new REST().setToken(token);
-    // console.log(token)
 
     try {
         console.log(`Started refreshing ${commandData.length} application (/) commands.`);

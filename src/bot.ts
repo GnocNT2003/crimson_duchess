@@ -2,7 +2,7 @@ import { Client, Collection, GatewayIntentBits } from 'discord.js';
 import { config } from './config.js';
 import { registerReadyEvent } from './events/ready.js';
 import type Command from './types/commandTypes.js';
-import gettAllCommands from './tools/command_handler.js';
+import gettAllCommands from './tools/commandHandler.js';
 import { registerInteractionCreateEvent } from './events/interaction.js';
 
 declare module 'discord.js' {
@@ -16,6 +16,7 @@ export async function createBot() {
     intents: [
       GatewayIntentBits.Guilds,
       GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.GuildVoiceStates,
       GatewayIntentBits.MessageContent,
     ],
   });
