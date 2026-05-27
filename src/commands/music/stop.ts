@@ -3,7 +3,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import type { ChatInputCommandInteraction,  } from "discord.js";
 import { getVoiceConnection } from "@discordjs/voice";
 import { createLogger } from "../../tools/logging.js";
-import { getSubscribedAudioPlayer } from "../../tools/voiceConnect.js";
+import { getSubscribedAudioPlayer } from "../../tools/voiceHandler.js";
 
 const logger = createLogger("stop");
 
@@ -22,7 +22,7 @@ const stopCommand: Command = {
 
         try {
             if (connection) {
-                const player = getSubscribedAudioPlayer(interaction.guild!);
+                const player = getSubscribedAudioPlayer(connection);
                 if (player) {
                     logger.log('Stopping audio player');
                     player.stop();

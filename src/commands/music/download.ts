@@ -2,62 +2,10 @@ import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type { ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
-import { chromium } from "playwright";
-import { expect } from "playwright/test";
-import path from "path";
 import { getMusicDownloadsDir } from "../../tools/filePathResolver.js";
-
-const YOUTUBE_AUDIO_CONVERTER_URL = 'https://v3.y2mate.nu/';
+import { downloadAudioFromYoutube } from "../../tools/youtubeHandler.js";
 
 const logger = createLogger("download");
-
-async function downloadAudioFromYoutube(url: string, downloadDir: string): Promise<string> {
-    logger.sep();
-    logger.log(`START DOWNLOAD`);
-    logger.log('Launching browser');
-    const browser = await chromium.launch({ headless: true });
-    try {
-        const context = await browser.newContext({ acceptDownloads: true });
-        const page = await context.newPage();
-
-        logger.log(`Navigating to ${YOUTUBE_AUDIO_CONVERTER_URL}`);
-        await page.goto(YOUTUBE_AUDIO_CONVERTER_URL, { waitUntil: 'load', timeout: 30000 });
-        logger.log(`Page loaded: ${page.url()}`);
-
-        const inputUrl = page.locator('input#video');
-        logger.log(`Filling in the URL: ${url}`);
-        await inputUrl.fill(url);
-
-        const convertButton = page.locator('button[type=submit]');
-        logger.log('Clicking convert button');
-        await convertButton.click();
-        
-        try {
-            const downloadEvent = page.waitForEvent('download', { timeout: 300000 });
-            const downloadButton = page.locator('button.download[type=button]');
-            logger.log('Waiting for download button to be enabled');
-            await expect(downloadButton).toBeEnabled({ timeout: 30000 });
-            logger.log('Clicking download button');
-            await downloadButton.click();
-
-            logger.log('Downloading file');
-            const download = await downloadEvent;
-
-            logger.log(`Saving downloaded file to disk as ${download.suggestedFilename()}`);
-            await download.saveAs(path.join(downloadDir, download.suggestedFilename()));
-
-            return download.suggestedFilename();
-        }
-        catch(error) {
-            logger.log(`Error occurred during download: ${error instanceof Error ? error.message : String(error)}`);
-            throw error;
-        }
-    }
-    finally {
-        logger.log('Closing browser');
-        await browser.close();
-    }
-}
 
 const downloadCommand: Command = {
     data: new SlashCommandBuilder()
@@ -73,29 +21,35 @@ const downloadCommand: Command = {
     async execute(interaction: ChatInputCommandInteraction) {
         const url = interaction.options.getString('url', true);
 
+        logger.sep();
+        logger.log(`START DOWNLOAD`);
+
         try {
             const hostname = new URL(url).hostname;
             // logger.log(`Parsed hostname from URL: ${hostname}`);
             if (!hostname.includes('youtube')) {
+                logger.log(`Invalid hostname: ${hostname}. Required Youtube url.`);
                 await interaction.reply({content: 'Invalid hostname. Required Youtube url.',
                     flags: MessageFlags.Ephemeral
                 });
                 return;
             };
         } catch {
+            logger.log(`Invalid URL provided: ${url}`);
             await interaction.reply({content: 'Invalid URL provided.', 
                 flags: MessageFlags.Ephemeral
             });
             return;
-        }
+        };
         
         await interaction.deferReply();
 
         try {
             const downloadsDir = getMusicDownloadsDir();
-            const filename = await downloadAudioFromYoutube(url, downloadsDir);
+            const filename = await downloadAudioFromYoutube(url, downloadsDir, logger);
             await interaction.editReply(`Audio downloaded successfully: \`${filename}\``);
         } catch (error) {
+            logger.log(`Error while trying to play music: ${String(error)}`);
             await interaction.editReply(
                 `Failed to download audio: ${error instanceof Error ? error.message : String(error)}`,
             );

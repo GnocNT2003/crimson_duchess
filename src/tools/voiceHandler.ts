@@ -15,11 +15,7 @@ export function getOrJoinVoiceChannel(guild: Guild): VoiceConnection {
     return connection;
 };
 
-export function getSubscribedAudioPlayer(guild: Guild) {
-    const connection = getVoiceConnection(guild.id);
-    if (!connection) {
-        throw new Error('No active voice connection found for this guild');
-    }
+export function getSubscribedAudioPlayer(connection: VoiceConnection) {
     
     const state = connection.state;
     if (state.status === VoiceConnectionStatus.Ready) {
@@ -27,16 +23,21 @@ export function getSubscribedAudioPlayer(guild: Guild) {
         if (player) {
             return player;
         } else {
-            throw new Error('No audio player subscribed to the current voice connection');
+            return;
         }
     }
 };
 
-export function getOrCreateAudioPlayer(guild: Guild) {
-    const player = getSubscribedAudioPlayer(guild) || createAudioPlayer({
+export function getOrCreateAudioPlayer(connection: VoiceConnection) {
+    const player = getSubscribedAudioPlayer(connection) || createAudioPlayer({
         behaviors: {
             noSubscriber: NoSubscriberBehavior.Pause,
         },
     });
+
+    player.on('error', error => {
+        throw new Error(`Error on audio player: ${String(error)}`)
+    })
+
     return player;
 };

@@ -3,7 +3,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from '../../tools/logging.js';
 import { AudioPlayerStatus, getVoiceConnection } from '@discordjs/voice';
-import { getSubscribedAudioPlayer } from '../../tools/voiceConnect.js';
+import { getSubscribedAudioPlayer } from '../../tools/voiceHandler.js';
 
 const logger = createLogger("pause");
 
@@ -21,7 +21,7 @@ const pauseCommand: Command = {
 
         try {
             if (connection) {
-                const player = getSubscribedAudioPlayer(interaction.guild!);
+                const player = getSubscribedAudioPlayer(connection);
                 if (player) {
                     if (player.state.status === AudioPlayerStatus.Paused) {
                         logger.log('Audio player is already paused');
