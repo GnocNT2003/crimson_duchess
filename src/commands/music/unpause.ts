@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
+import { SlashCommandBuilder } from 'discord.js';
 import type { ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from '../../tools/logging.js';
