@@ -4,13 +4,15 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:build": "pnpm run build && pnpm start",
+    "start:dev": "infisical run --env=dev pnpm start",
+    "start:dev-build": "pnpm run build && pnpm run start:dev",
+    "start:prod" : "infisical run --env=dev pnpm start",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "deploy": "node --env-file=.env dist/deploy.js",
+    "deploy:dev": "infisical run --env=dev node dist/deploy.js",
+    "deploy:prod": "infisical run --env=prod node dist/deploy.js",
     "check:types": "tsc --noEmit",
     "check:dep": "node dist/test/debugDependancies.js",
     "preinstall": "npx only-allow pnpm"
