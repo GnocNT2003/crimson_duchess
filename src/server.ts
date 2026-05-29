@@ -1,8 +1,9 @@
 import express from 'express';
+import type { Express } from 'express';
 import { config } from './config.js';
 import healthRouter from './routes/health.js';
 
-export function createServer() {
+export function createServer(): Express {
   const app = express();
 
   app.use(express.json());
@@ -11,7 +12,7 @@ export function createServer() {
   return app;
 }
 
-export function startServer() {
+export function startServer(): Express {
   const app = createServer();
   const { port } = config.server;
 
