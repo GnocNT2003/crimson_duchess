@@ -7,7 +7,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:build": "npm run build && npm start",
+    "start:build": "pnpm run build && pnpm start",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "deploy": "node --env-file=.env dist/deploy.js",
