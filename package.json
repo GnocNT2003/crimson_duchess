@@ -8,11 +8,11 @@
     "start": "node dist/index.js",
     "start:dev": "infisical run --env=dev pnpm start",
     "start:dev-build": "pnpm run build && pnpm run start:dev",
-    "start:prod" : "infisical run --env=dev pnpm start",
+    "start:prod": "infisical run --env=dev pnpm start",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "deploy:dev": "infisical run --env=dev node dist/deploy.js",
-    "deploy:prod": "infisical run --env=prod node dist/deploy.js",
+    "register:dev": "infisical run --env=dev node dist/registerCommands.js",
+    "register:prod": "infisical run --env=prod node dist/registerCommands.js",
     "check:types": "tsc --noEmit",
     "check:dep": "node dist/test/debugDependancies.js",
     "preinstall": "npx only-allow pnpm"
@@ -23,6 +23,7 @@
   "description": "",
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
+    "@infisical/cli": "^0.43.87",
     "discord.js": "^14.26.3",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

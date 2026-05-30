@@ -9,3 +9,12 @@ dist/
 # Downloads and temporary files
 downloads/
 temp/
+
+# Archives and logs
+*.zip
+*.log
+
+# Legacy
+nginx
+mitmproxy
+scripts
