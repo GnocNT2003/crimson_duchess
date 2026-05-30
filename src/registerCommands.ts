@@ -3,7 +3,7 @@ import { config } from './config.js';
 import gettAllCommands from './tools/commandHandler.js';
 import type Command from './types/commandTypes.js';
 
-export async function deployCommands() {
+export async function registerCommands() {
     const token = config.discord.token;
     const appId = config.discord.appId;
 
@@ -15,19 +15,19 @@ export async function deployCommands() {
     const rest = new REST().setToken(token);
 
     try {
-        console.log(`Started refreshing ${commandData.length} application (/) commands.`);
+        console.log(`Started registering ${commandData.length} application (/) commands.`);
 		// The put method is used to fully refresh all commands in the guild with the current set
 		await rest.put(Routes.applicationCommands(appId), { body: commandData });
-        console.log(`Successfully reloaded ${commandData.length} application (/) commands.`);
+        console.log(`Successfully registered ${commandData.length} application (/) commands.`);
 		
     } catch (error) {
-        console.error('Error deploying commands:', error);
+        console.error('Error registering commands:', error);
         throw error;
     }
 }
 
 (() => {
-    void deployCommands().then(() => {
+    void registerCommands().then(() => {
         console.log('Successfully registered application commands.');
     })
     .catch((error) => {

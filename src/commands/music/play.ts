@@ -73,6 +73,7 @@ const playCommand: Command = {
         };
 
         await interaction.deferReply();
+        
         try {
             if (!interaction.guild) {
                 logger.log('No guild found in interaction');
