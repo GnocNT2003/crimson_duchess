@@ -21,6 +21,12 @@ export function getLawDownloadsDir(): string {
     return dir;
 }
 
+export function getTempDownloadDir(): string {
+    const dir = path.join(__projectRoot, 'temp');
+    fs.mkdirSync(dir, { recursive: true });
+    return dir;
+}
+
 export function getMusicDownloadsFiles(): string[] {
     const dir = path.join(__projectRoot, 'downloads', 'musics');
     if (!fs.existsSync(dir)) {
