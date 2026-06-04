@@ -4,12 +4,14 @@ import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
 import { getOrCreateAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
 import { createAudioResource } from "@discordjs/voice";
-import { downloadAudioFromYoutube } from "../../tools/youtubeHandler.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { downloadAudioFromYTbyScript, downloadAudioFromYTbyWeb } from "../../tools/youtubeHandler.js";
 import { getTempDownloadDir } from "../../tools/filePathResolver.js";
 import path from "path";
 
 const logger = createLogger("play");
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function joinChannelAndStreamMusic(url: string, guild: Guild, downloadDir: string) {
     logger.log('Getting current voice connection or joining new voice channel');
     const connection = getOrJoinVoiceChannel(guild);
@@ -17,7 +19,9 @@ async function joinChannelAndStreamMusic(url: string, guild: Guild, downloadDir:
     logger.log(`Creating or getting audio player for streaming from URL: ${url}`);
     const player = getOrCreateAudioPlayer(connection);
 
-    const filename = await downloadAudioFromYoutube(url, downloadDir, logger)
+    // const filename = await downloadAudioFromYTbyWeb(url, downloadDir, logger)
+    // const filename = await downloadAudioFromYTbyScript(url, downloadDir, logger);
+    const filename = 'Tobu - Infectious.webm';
     const filePath = path.join(downloadDir, filename)
 
     try {

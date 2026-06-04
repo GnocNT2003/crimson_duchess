@@ -3,7 +3,7 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
 import { getMusicDownloadsDir } from "../../tools/filePathResolver.js";
-import { downloadAudioFromYoutube } from "../../tools/youtubeHandler.js";
+import { downloadAudioFromYTbyWeb } from "../../tools/youtubeHandler.js";
 
 const logger = createLogger("download");
 
@@ -46,7 +46,7 @@ const downloadCommand: Command = {
 
         try {
             const downloadsDir = getMusicDownloadsDir();
-            const filename = await downloadAudioFromYoutube(url, downloadsDir, logger);
+            const filename = await downloadAudioFromYTbyWeb(url, downloadsDir, logger);
             await interaction.editReply(`Audio downloaded successfully: \`${filename}\``);
         } catch (error) {
             logger.log(`Error while trying to play music: ${String(error)}`);
