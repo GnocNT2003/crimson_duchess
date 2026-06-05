@@ -11,8 +11,8 @@
     "start:prod": "infisical run --env=prod --path=/Discord pnpm start",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "register:dev": "infisical run --env=dev node dist/registerCommands.js",
-    "register:prod": "infisical run --env=prod node dist/registerCommands.js",
+    "register:dev": "infisical run --env=dev --path=/Discord node dist/registerCommands.js",
+    "register:prod": "infisical run --env=prod --path=/Discord node dist/registerCommands.js",
     "check:types": "tsc --noEmit",
     "check:dep": "node dist/test/debugDependancies.js",
     "preinstall": "npx only-allow pnpm"

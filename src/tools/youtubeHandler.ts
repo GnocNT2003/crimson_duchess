@@ -41,7 +41,7 @@ export async function downloadAudioFromYTbyWeb(url: string, downloadDir: string,
             logger.log(`Saving downloaded file to disk as ${download.suggestedFilename()}`);
             await download.saveAs(path.join(downloadDir, download.suggestedFilename()));
 
-            return download.suggestedFilename();
+            return path.join(downloadDir, download.suggestedFilename());
         }
         catch(error) {
             logger.log(`Error occurred during download: ${error instanceof Error ? error.message : String(error)}`);
@@ -58,12 +58,14 @@ export async function downloadAudioFromYTbyWeb(url: string, downloadDir: string,
     }
 }
 
-export async function downloadAudioFromYTbyScript(url: string, downloadDir: string, logger: Logger): Promise<string> {
+export async function downloadAudioFromYTbyScript(url: string, downloadDir: string, logger: Logger): Promise<{filePath: string, title: string}> {
     const ytDlpScriptPath = __projectRoot + '/yt-dlp/downloadYT.py';
     const pythonExecutablePath = __projectRoot + '/yt-dlp/.venv/Scripts/python.exe';
     return new Promise((resolve, reject) => {
         const pyDownloader = spawn(pythonExecutablePath, [ytDlpScriptPath]);
-        let filename: string = '';
+        let filePath: string = '';
+        let title: string = '';
+
 
         // Input the URL to the Python script through stdin
         pyDownloader.stdin.write(JSON.stringify({ url, downloadDir}));
@@ -84,8 +86,13 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
                     } else if (parsedOutput['status'] === 'finished') {
                         logger.log('Download finished, processing file...');
                         if ('filename' in parsedOutput) {
-                            filename = String(parsedOutput['filename']);
-                            logger.log(`Audio downloaded successfully by Python script: ${filename}`);
+                            filePath = String(parsedOutput['filename']);
+                            logger.log(`Audio downloaded successfully by Python script: ${filePath}`);
+
+                        }
+                    } else if (parsedOutput['status'] === 'done') {
+                        if ('title' in parsedOutput) {
+                            title = String(parsedOutput['title']);
                         }
                     }
                 }
@@ -100,7 +107,7 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
 
         pyDownloader.on('close', (code) => {
             if (code != 1) {
-                resolve(filename);
+                resolve({filePath, title});
             } else {
                 logger.log(`Python script exited with code ${code}`);
                 reject(new Error(`Python script failed with exit code ${code}`));
@@ -110,10 +117,16 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
 }
 
 export function extractYoutubeUrl(url: string, urlType: YoutubeUrlType): string {
-    const hostname = new URL(url).hostname;
-    if (!(hostname.includes('youtube') || hostname.includes('youtu.be'))) {
-        throw new Error(`Invalid hostname: ${hostname}. Required Youtube url.`);
+    try {
+        const hostname = new URL(url).hostname;
+        if (!(hostname.includes('youtube') || hostname.includes('youtu.be'))) {
+            throw new Error(`Invalid hostname: ${hostname}. Required Youtube url.`);
+        }
+        
+    } catch (error) {
+        throw new Error(`Error occurred while extracting YouTube URL: ${String(error)}`);
     }
+    
     const urlParamsList = url.split('&');
     if (urlParamsList.length === 0) {
         throw new Error(`Invalid URL format: ${url}`);

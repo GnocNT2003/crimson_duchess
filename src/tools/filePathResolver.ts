@@ -32,7 +32,7 @@ export function getMusicDownloadsFiles(): string[] {
     if (!fs.existsSync(dir)) {
         return [];
     }
-    const files = fs.readdirSync(dir).filter(file => file.endsWith('.mp3'));
+    const files = fs.readdirSync(dir)
     return files;
 }
 
@@ -41,7 +41,7 @@ export function getMusicTempDownloadsFiles(): string[] {
     if (!fs.existsSync(dir)) {
         return [];
     }
-    const files = fs.readdirSync(dir).filter(file => file.endsWith('.mp3'));
+    const files = fs.readdirSync(dir)
     return files;
 }
 

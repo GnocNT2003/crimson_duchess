@@ -4,10 +4,12 @@ import { registerReadyEvent } from './events/ready.js';
 import type Command from './types/commandTypes.js';
 import gettAllCommands from './tools/commandHandler.js';
 import { registerInteractionCreateEvent } from './events/interaction.js';
+import type { QueueItem } from './types/queueTypes.js';
 
 declare module 'discord.js' {
   export interface Client {
     commands: Collection<string, Command>;
+    queue: QueueItem[];
   }
 }
 
@@ -26,6 +28,7 @@ export async function createBot() {
   client.commands = new Collection<string, Command>();
   await gettAllCommands(client.commands);
 
+  client.queue = [];
   registerInteractionCreateEvent(client);
 
   return client;
