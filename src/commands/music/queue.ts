@@ -5,7 +5,7 @@ import { createLogger } from "../../tools/logging.js";
 import { extractYoutubeUrl } from "../../tools/youtubeHandler.js";
 import { getTempDownloadDir } from "../../tools/filePathResolver.js";
 import { YoutubeUrlType } from "../../types/youtubeUrlTypes.js";
-import { queueAndDownloadMusic } from "../../tools/queueHanlder.js";
+import { queueAndDownloadMusic } from "../../tools/queueHandler.js";
 
 const logger = createLogger("queue");
 
