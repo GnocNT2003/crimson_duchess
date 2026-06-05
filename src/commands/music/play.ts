@@ -5,8 +5,9 @@ import { createLogger } from "../../tools/logging.js";
 import { getOrCreateAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
 import { createAudioResource } from "@discordjs/voice";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { downloadAudioFromYTbyScript, downloadAudioFromYTbyWeb } from "../../tools/youtubeHandler.js";
+import { downloadAudioFromYTbyScript, downloadAudioFromYTbyWeb, extractYoutubeUrl } from "../../tools/youtubeHandler.js";
 import { getTempDownloadDir } from "../../tools/filePathResolver.js";
+import { YoutubeUrlType } from "../../types/youtubeUrlTypes.js";
 // import path from "path";
 
 const logger = createLogger("play");
@@ -53,23 +54,16 @@ const playCommand: Command = {
         ) as SlashCommandBuilder,
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const url = interaction.options.getString('url', true);
+        let url = interaction.options.getString('url', true);
         const tempDownloadDir = getTempDownloadDir();
         
         logger.sep();
         logger.log('START PLAY');
 
         try {
-            const hostname = new URL(url).hostname;
-            if (!(hostname.includes('youtube') || hostname.includes('youtu.be'))) {
-                logger.log(`Invalid hostname: ${hostname}. Required Youtube url.`);
-                await interaction.reply({content: 'Invalid hostname. Required Youtube url.',
-                    flags: MessageFlags.Ephemeral
-                });
-                return;                    
-            };
-        } catch {
-            logger.log(`Invalid URL provided: ${url}`);
+            url = extractYoutubeUrl(url, YoutubeUrlType.Video); 
+        } catch (error) {
+            logger.log(`Invalid URL provided: ${String(error)}`);
             await interaction.reply({content: 'Invalid URL provided.', 
                 flags: MessageFlags.Ephemeral
             });

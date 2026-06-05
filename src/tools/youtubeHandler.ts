@@ -4,6 +4,7 @@ import { expect } from "playwright/test";
 import { spawn } from "child_process";
 import type { Logger } from "./logging.js";
 import { __projectRoot } from "./filePathResolver.js";
+import { YoutubeUrlType } from "../types/youtubeUrlTypes.js";
 
 const YOUTUBE_AUDIO_CONVERTER_URL = 'https://v3.y2mate.nu/';
 
@@ -58,29 +59,6 @@ export async function downloadAudioFromYTbyWeb(url: string, downloadDir: string,
 }
 
 export async function downloadAudioFromYTbyScript(url: string, downloadDir: string, logger: Logger): Promise<string> {
-    // return new Promise((resolve, reject) => {
-    //     const ytDlp = spawn('yt-dlp', [
-    //         '--format', 'bestaudio',
-    //         '--output', path.join(downloadDir, '%(title)s.%(ext)s'),
-    //         url
-    //     ]);
-
-    //     ytDlp.on('close', (code) => {
-    //         if (code === 0) {
-    //             logger.log('Audio downloaded successfully');
-    //             // Note: This is a simplified approach. In a real application, you would need to extract the actual filename from the download process.
-    //             resolve('downloaded_audio.mp3');
-    //         } else {
-    //             logger.log('Error occurred while downloading audio');
-    //             reject(new Error('Failed to download audio'));
-    //         }
-    //     });
-
-    //     ytDlp.on('error', (error) => {
-    //         logger.log(`Error occurred: ${error instanceof Error ? error.message : String(error)}`);
-    //         reject(error);
-    //     });
-    // });
     const ytDlpScriptPath = __projectRoot + '/yt-dlp/downloadYT.py';
     const pythonExecutablePath = __projectRoot + '/yt-dlp/.venv/Scripts/python.exe';
     return new Promise((resolve, reject) => {
@@ -129,4 +107,35 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
             }
         });
     });
+}
+
+export function extractYoutubeUrl(url: string, urlType: YoutubeUrlType): string {
+    const hostname = new URL(url).hostname;
+    if (!(hostname.includes('youtube') || hostname.includes('youtu.be'))) {
+        throw new Error(`Invalid hostname: ${hostname}. Required Youtube url.`);
+    }
+    const urlParamsList = url.split('&');
+    if (urlParamsList.length === 0) {
+        throw new Error(`Invalid URL format: ${url}`);
+    }
+
+    switch (urlType) {
+        case YoutubeUrlType.Video:
+            if (!urlParamsList.some(param => param.includes('v='))) {
+                throw new Error(`Video URL must contain 'v=' parameter: ${url}`);
+            }
+            return urlParamsList[0];
+        case YoutubeUrlType.Playlist:
+            if (!urlParamsList.some(param => param.startsWith('list='))) {
+                throw new Error(`Playlist URL must contain 'list=' parameter: ${url}`);
+            }
+            return url;
+        case YoutubeUrlType.Channel:
+            if (!urlParamsList.some(param => param.includes('@') || param.includes('channel/'))) {
+                throw new Error(`Channel URL must contains '@' or 'channel/' segment: ${url}`);
+            }
+            return url;
+        default:
+            return url;
+    }
 }
