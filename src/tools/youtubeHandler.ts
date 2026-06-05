@@ -94,26 +94,34 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
         // Get output from the Python script
         pyDownloader.stdout.on('data', (data) => {
             logger.log(`Output from Python script: ${String(data)}`);
+
+            // Attempt to parse the output as JSON to extract progress and filename information
+            try {
+                const parsedOutput: unknown = JSON.parse(String(data));
+                if (parsedOutput && typeof parsedOutput === 'object' && 'status' in parsedOutput) {
+                    if (parsedOutput['status'] === 'downloading') {
+                        if ('progress' in parsedOutput && 'speed' in parsedOutput && 'eta' in parsedOutput) {
+                            logger.log(`Download progress: ${String(parsedOutput['progress'])}, Speed: ${String(parsedOutput['speed'])}, ETA: ${String(parsedOutput['eta'])}`);
+                        }
+                    } else if (parsedOutput['status'] === 'finished') {
+                        logger.log('Download finished, processing file...');
+                        if ('filename' in parsedOutput) {
+                            filename = String(parsedOutput['filename']);
+                            logger.log(`Audio downloaded successfully by Python script: ${filename}`);
+                        }
+                    }
+                }
+            } catch (error) {
+                logger.log(`Error parsing Python script output: ${String(error)}`);
+            }
         });
 
         pyDownloader.stderr.on('data', (data) => {
             logger.log(`Error from Python script: ${String(data)}`);
         });
 
-        pyDownloader.on('close', (data ,code: number) => {
-            if (code === 0) {
-            // Assuming the Python script outputs the filename of the downloaded audio on success
-            const output = String(data).trim();
-                try {
-                    const parsedOutput: unknown = JSON.parse(output);
-                    if (parsedOutput && typeof parsedOutput === 'object' && 'title' in parsedOutput && typeof parsedOutput['title'] === 'string') {
-                        logger.log(`Audio downloaded successfully by Python script: ${parsedOutput['title']}`);
-                        filename = parsedOutput['title'] + '.mp3'; // Assuming the script saves the file with .mp3 extension
-                    }
-                } catch (error) {
-                    logger.log(`Error parsing Python script output: ${String(error)}`);
-                }
-                // logger.log('Audio downloaded successfully by Python script');
+        pyDownloader.on('close', (code) => {
+            if (code != 1) {
                 resolve(filename);
             } else {
                 logger.log(`Python script exited with code ${code}`);

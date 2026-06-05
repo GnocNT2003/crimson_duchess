@@ -7,7 +7,7 @@ import { createAudioResource } from "@discordjs/voice";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { downloadAudioFromYTbyScript, downloadAudioFromYTbyWeb } from "../../tools/youtubeHandler.js";
 import { getTempDownloadDir } from "../../tools/filePathResolver.js";
-import path from "path";
+// import path from "path";
 
 const logger = createLogger("play");
 
@@ -20,9 +20,9 @@ async function joinChannelAndStreamMusic(url: string, guild: Guild, downloadDir:
     const player = getOrCreateAudioPlayer(connection);
 
     // const filename = await downloadAudioFromYTbyWeb(url, downloadDir, logger)
-    // const filename = await downloadAudioFromYTbyScript(url, downloadDir, logger);
-    const filename = 'Tobu - Infectious.webm';
-    const filePath = path.join(downloadDir, filename)
+    // const filename = 'Tobu - Infectious.webm';
+    const filePath = await downloadAudioFromYTbyScript(url, downloadDir, logger);
+    // const filePath = path.join(downloadDir, filename)
 
     try {
         // await pipeline(stream, outStreamFile);
