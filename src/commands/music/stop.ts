@@ -22,6 +22,8 @@ const stopCommand: Command = {
 
         try {
             if (connection) {
+                // const subcribedPlayer = getSubscribedAudioPlayer(connection);
+                // const player = subcribedPlayer?.player
                 const player = getSubscribedAudioPlayer(connection);
                 if (player) {
                     logger.log('Stopping audio player');

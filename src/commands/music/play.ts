@@ -2,7 +2,7 @@ import type { Guild, ChatInputCommandInteraction, AutocompleteInteraction } from
 import { MessageFlags, SlashCommandBuilder } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
-import { getOrCreateAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
+import { initializeAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
 import { createAudioResource } from "@discordjs/voice";
 import { extractYoutubeUrl } from "../../tools/youtubeHandler.js";
 import { getTempDownloadDir } from "../../tools/filePathResolver.js";
@@ -16,9 +16,11 @@ const logger = createLogger("play");
 function joinChannelAndStreamMusic(musicItem: QueueItem, guild: Guild) {
     logger.log('Getting current voice connection or joining new voice channel');
     const connection = getOrJoinVoiceChannel(guild);
+    // logger.log(connection.id)
 
     logger.log(`Creating or getting audio player for streaming from file: ${musicItem.filePath}`);
-    const player = getOrCreateAudioPlayer(connection, guild);
+    const {player, isCreated} = initializeAudioPlayer(connection, guild);
+    if (isCreated) logger.log('New audio was created!')
     
     try {
         logger.log('Creating audio resource')
@@ -26,7 +28,9 @@ function joinChannelAndStreamMusic(musicItem: QueueItem, guild: Guild) {
     
         logger.log('Playing audio resource');
         player.play(resource);
-        connection.subscribe(player);
+        if (isCreated) {
+            connection.subscribe(player);
+        }
 
         // Update the status of the queue item to 'playing'
         musicItem.status = QueueItemStatus.Playing;
@@ -76,6 +80,8 @@ const playCommand: Command = {
             await interaction.editReply('This command can only be used in a server.');
             return;
         }
+
+        await interaction.deferReply();
         
         const subcommand = interaction.options.getSubcommand();
         logger.log('Executing play command with ' + subcommand + ' subcommand');
@@ -89,7 +95,8 @@ const playCommand: Command = {
             const { item: existingItem } = getMusicInQueue(musicQueue, 'title', filename);
             if (!existingItem) {
                 logger.log(`No music found in queue with title: ${filename}`);
-                await interaction.reply({content: `No music found in queue with title: \`${filename}\``, 
+                await interaction.reply({
+                    content: `No music found in queue with title: \`${filename}\``, 
                     flags: MessageFlags.Ephemeral
                 });
                 return;
@@ -115,8 +122,6 @@ const playCommand: Command = {
             musicItem = await queueAndDownloadMusic(url, interaction.guild, tempDownloadDir, logger);
             // filePath = fileDownloadPath;
         }
-    
-        await interaction.deferReply();
         
         try {
             joinChannelAndStreamMusic(musicItem, interaction.guild);
@@ -132,7 +137,6 @@ const playCommand: Command = {
                 'An error occurred while playing the music.'
             );
         }
-        
     },
 
     async autocomplete(interaction: AutocompleteInteraction) {

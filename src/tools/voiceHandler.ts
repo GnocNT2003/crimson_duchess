@@ -1,5 +1,14 @@
 import type { VoiceConnection } from "@discordjs/voice";
-import { getVoiceConnection, joinVoiceChannel, createAudioPlayer, NoSubscriberBehavior, VoiceConnectionStatus, createAudioResource, AudioPlayerStatus } from "@discordjs/voice";
+import { 
+    getVoiceConnection, 
+    joinVoiceChannel, 
+    createAudioPlayer, 
+    NoSubscriberBehavior, 
+    VoiceConnectionStatus, 
+    createAudioResource, 
+    AudioPlayerStatus 
+} from "@discordjs/voice";
+// import type { AudioPlayer } from "@discordjs/voice";
 import type { Guild } from 'discord.js';
 import { config } from '../config.js';
 import { QueueItemStatus } from "../types/queueTypes.js";
@@ -13,29 +22,43 @@ export function getOrJoinVoiceChannel(guild: Guild): VoiceConnection {
             guildId: guild.id,
             adapterCreator: guild.voiceAdapterCreator,
     });
-    // connection.musicQueue = connection.musicQueue || [];
+
+    // connection.on
 
     return connection;
 };
 
-export function getSubscribedAudioPlayer(connection: VoiceConnection) {
+export function getSubscribedAudioPlayer(
+    connection: VoiceConnection
+) {
     const state = connection.state;
-    if (state.status === VoiceConnectionStatus.Ready) {
+    if (state.status !== VoiceConnectionStatus.Destroyed) {
         const player = state.subscription?.player;
         if (player) {
+            // if (player.state.status === AudioPlayerStatus.Playing) {
+            //     player.stop()
+            // }
             return player;
-        } else {
-            return;
-        }
+        };
+        return;
     }
 };
 
-export function getOrCreateAudioPlayer(connection: VoiceConnection, guild?: Guild) {
-    const player = getSubscribedAudioPlayer(connection) || createAudioPlayer({
+export function initializeAudioPlayer(connection: VoiceConnection, guild?: Guild) {
+    let player = getSubscribedAudioPlayer(connection);
+    let isCreated = false
+    
+    if (player) return {player, isCreated};
+    // throw new Error('No voice connection currently found.')
+    player = createAudioPlayer({
         behaviors: {
             noSubscriber: NoSubscriberBehavior.Pause,
         },
     });
+    isCreated = true;
+
+    // const player = subcribedPlayer.player
+    // const isCreated = subcribedPlayer.isCreated
 
     player.on('stateChange', (oldState, newState) => {
         if (oldState.status !== newState.status) {
@@ -71,5 +94,5 @@ export function getOrCreateAudioPlayer(connection: VoiceConnection, guild?: Guil
         });
     }
 
-    return player;
+    return {player, isCreated};
 };
