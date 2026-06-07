@@ -21,6 +21,8 @@ const pauseCommand: Command = {
 
         try {
             if (connection) {
+                // const subcribedPlayer = getSubscribedAudioPlayer(connection);
+                // const player = subcribedPlayer?.player
                 const player = getSubscribedAudioPlayer(connection);
                 if (player) {
                     if (player.state.status === AudioPlayerStatus.Paused) {

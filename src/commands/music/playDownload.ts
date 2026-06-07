@@ -6,7 +6,7 @@ import { getMusicDownloadsFiles, __projectRoot } from "../../tools/filePathResol
 import { createAudioResource } from "@discordjs/voice";
 import path from "path";
 import type { Guild } from 'discord.js';
-import { getOrCreateAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
+import { initializeAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
 import fs from "fs";
 
 const logger = createLogger("play-download");
@@ -16,7 +16,7 @@ function joinChannelAndPlay(filename: string, guild: Guild) {
     const connection = getOrJoinVoiceChannel(guild);
 
     logger.log(`Creating or getting audio player and resource for file: ${filename}`);
-    const player = getOrCreateAudioPlayer(connection);
+    const {player} = initializeAudioPlayer(connection);
     const filePath = path.join(__projectRoot, 'downloads', 'musics', `${filename}.mp3`);
     if (!fs.existsSync(filePath)) {
         logger.log(`Audio file not found: ${filePath}`);

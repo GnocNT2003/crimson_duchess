@@ -2,6 +2,9 @@
 node_modules/
 dist/
 
+# Python virtual environments
+.venv/
+
 # Environment variables
 .env
 *.js.map
@@ -17,4 +20,4 @@ temp/
 # Legacy
 nginx
 mitmproxy
-scripts
+yt-dlp/helpYT.py
