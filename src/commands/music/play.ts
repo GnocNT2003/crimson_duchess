@@ -89,7 +89,7 @@ const playCommand: Command = {
         let musicItem: QueueItem;
 
         if (subcommand === 'queue') {
-            const filename = interaction.options.getString('name', true);
+            const filename = interaction.options.getString('name', true).trim();
 
             const musicQueue = interaction.guild.client.queue;
             const { item: existingItem } = getMusicInQueue(musicQueue, 'title', filename);
@@ -105,7 +105,7 @@ const playCommand: Command = {
             // filePath = existingItem?.filePath as string;
 
         } else {
-            let url = interaction.options.getString('url', true) || '';
+            let url = interaction.options.getString('url', true).trim() || '';
             const tempDownloadDir = getTempDownloadDir();
             
             try {

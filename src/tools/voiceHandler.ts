@@ -17,13 +17,32 @@ import { getMusicInQueue } from "./queueHandler.js";
 const { defaultVoiceChannelId } = config.discord;
 
 export function getOrJoinVoiceChannel(guild: Guild): VoiceConnection {
-    const connection: VoiceConnection = getVoiceConnection(guild.id) || joinVoiceChannel({
+    let connection = getVoiceConnection(guild.id);
+    if (connection) return connection
+
+    connection = joinVoiceChannel({
             channelId: defaultVoiceChannelId,
             guildId: guild.id,
             adapterCreator: guild.voiceAdapterCreator,
     });
 
-    // connection.on
+    connection.on('stateChange', (oldState, newState) => {
+        if (oldState.status !== newState.status) {
+            console.log(`Voice connector state changed from ${oldState.status} to ${newState.status}`)
+        }
+    });
+    
+    connection.on(VoiceConnectionStatus.Disconnected, () => {
+        console.log('Voice connection is disconnected - Attempting to reconnect');
+        for (let attempt = 0; attempt < 3; attempt++) {
+            console.log(`Attempt reconnecting number ${attempt + 1}`);
+            connection.rejoin();
+        }
+    });
+
+    connection.on(VoiceConnectionStatus.Ready, () => {
+        console.log('Voice connection is ready - ready to play audio!');
+    });
 
     return connection;
 };
@@ -48,8 +67,8 @@ export function initializeAudioPlayer(connection: VoiceConnection, guild?: Guild
     let player = getSubscribedAudioPlayer(connection);
     let isCreated = false
     
+    // If player is already created
     if (player) return {player, isCreated};
-    // throw new Error('No voice connection currently found.')
     player = createAudioPlayer({
         behaviors: {
             noSubscriber: NoSubscriberBehavior.Pause,
