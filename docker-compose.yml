@@ -1,0 +1,26 @@
+services:
+  crimson-duchess:
+    image: crimson-duchess:1.0.0
+    container_name: crimson-duches
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - ${PORT}:${PORT}
+    expose:
+      - ${PORT}
+    volumes:
+      - dowload_music_data:/app/download
+      - temp_music_data:/app/temp
+    environment:
+      DEFAULT_VOICE_CHANNEL_ID: ${DEFAULT_VOICE_CHANNEL_ID}
+      DISCORD_APP_ID: ${DISCORD_APP_ID}
+      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY}
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      GUILD_ID: ${GUILD_ID}
+      PORT: ${PORT}
+
+volumes:
+  dowload_music_data:
+  temp_music_data:
