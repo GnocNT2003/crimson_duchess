@@ -1,4 +1,4 @@
 allowBuilds:
-  '@infisical/cli': false
+  # '@infisical/cli': false
   esbuild: true
   ffmpeg-static: true

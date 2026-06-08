@@ -1,7 +1,7 @@
 # ========================================
 # Base Stage
 # ========================================
-FROM node:24.15.0-slim AS base
+FROM node:24.15.0-alpine3.23 AS base
 
 # Set pnpm environment variables
 ENV PNPM_HOME="/pnpm"
@@ -51,12 +51,9 @@ FROM base
 #     useradd -g discord -u 1001 discord && \
 #     chown -R discord:discord /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
-    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
-    -o /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp \
-    && apt-get purge -y curl ca-certificates && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN wget https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_musllinux \
+    -O /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp
 
 # Copy runtime dependencies
 COPY --from=deps /app/node_modules ./node_modules
