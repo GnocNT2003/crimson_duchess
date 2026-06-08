@@ -2,6 +2,9 @@
 node_modules/
 dist/
 
+# Python virtual environments
+.venv/
+
 # Environment variables
 .env
 *.js.map
@@ -9,3 +12,12 @@ dist/
 # Downloads and temporary files
 downloads/
 temp/
+
+# Archives and logs
+*.zip
+*.log
+
+# Legacy
+nginx
+mitmproxy
+yt-dlp/helpYT.py

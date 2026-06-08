@@ -28,11 +28,20 @@ export function getTempDownloadDir(): string {
 }
 
 export function getMusicDownloadsFiles(): string[] {
-    const dir = path.join(__projectRoot, 'downloads', 'musics');
+    const dir = getMusicDownloadsDir();
     if (!fs.existsSync(dir)) {
         return [];
     }
-    const files = fs.readdirSync(dir).filter(file => file.endsWith('.mp3'));
+    const files = fs.readdirSync(dir)
+    return files;
+}
+
+export function getMusicTempDownloadsFiles(): string[] {
+    const dir = getTempDownloadDir();
+    if (!fs.existsSync(dir)) {
+        return [];
+    }
+    const files = fs.readdirSync(dir)
     return files;
 }
 
