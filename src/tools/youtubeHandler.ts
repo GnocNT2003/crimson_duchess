@@ -68,7 +68,6 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
         let filePath: string = '';
         let title: string = '';
 
-
         // Input the URL to the Python script through stdin
         pyDownloader.stdin.write(JSON.stringify({ url, downloadDir}));
         pyDownloader.stdin.end();
@@ -90,7 +89,6 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
                         if ('filename' in parsedOutput) {
                             filePath = String(parsedOutput['filename']);
                             logger.log(`Audio downloaded successfully by Python script: ${filePath}`);
-
                         }
                     } else if (parsedOutput['status'] === 'done') {
                         if ('title' in parsedOutput) {
@@ -115,6 +113,76 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
                 reject(new Error(`Python script failed with exit code ${code}`));
             }
         });
+    });
+}
+
+export async function downloadAudioFromYTbyCLI(url: string, downloadDir: string, logger: Logger): Promise<{filePath: string, title: string}> {
+    return new Promise((resolve, reject) => {
+        let filePath: string = '';
+        let title: string = '';
+
+        const args = [
+            '-f', 'bestaudio/best',
+            '-o', '%(title)s.%(ext)s',
+            '-P', downloadDir,
+            '--windows-filenames',
+            '-q', '--progress', '--newline',
+            '--progress-template', 'download:{"status":"%(progress.status)s","progress":"%(progress.downloaded_bytes|0)s bytes / %(progress.total_bytes|0)s bytes","speed":"%(progress.speed|0)s bytes/s","eta":"%(progress.eta|0)s seconds"}',
+            '--print', 'after_move:{"status":"done","filename":"%(filename)j","title":"%(title)j","duration":%(duration|0)s}',
+            url,
+        ];
+        const cliDownloader = spawn('yt-dlp', args);
+
+        // Get output from CLI
+        cliDownloader.stdout.on('data', (data) => {
+            logger.log(`Output from CLI: ${String(data)}`);
+
+            // Attempt to parse the output as JSON to extract progress and filename information
+            try {
+                const parsedOutput: unknown = JSON.parse(String(data));
+                if (parsedOutput && typeof parsedOutput === 'object' && 'status' in parsedOutput) {
+                    if (parsedOutput['status'] === 'done') {
+                        logger.log('Download finished, processing file...');
+                        if ('filename' in parsedOutput) {
+                            filePath = String(parsedOutput['filename']);
+                            logger.log(`Audio downloaded successfully by CLI: ${filePath}`);
+                        }
+                        if ('title' in parsedOutput) {
+                            title = String(parsedOutput['title']);
+                        }
+                    }
+                }
+            } catch (error) {
+                logger.log(`Error parsing CLI output: ${String(error)}`);
+            }
+        });
+
+        // Get progress from CLI (yt-dlp output progress through stderr)
+        cliDownloader.stderr.on('data', (data) => {
+            try {
+                const parsedOutput: unknown = JSON.parse(String(data));
+                if (parsedOutput && typeof parsedOutput === 'object' && 'status' in parsedOutput) {
+                    if (parsedOutput['status'] === 'downloading') {
+                        if ('progress' in parsedOutput && 'speed' in parsedOutput && 'eta' in parsedOutput) {
+                            logger.log(`Download progress: ${String(parsedOutput['progress'])}, Speed: ${String(parsedOutput['speed'])}, ETA: ${String(parsedOutput['eta'])}`);
+                        }
+                    }
+                }
+            }
+            catch {
+                logger.log(`Error from CLI: ${String(data)}`);
+            }
+        });
+
+        cliDownloader.on('close', (code) => {
+            if (code !== 1) {
+                resolve({filePath, title});
+            } else {
+                logger.log(`CLI exited with code ${code}`);
+                reject(new Error(`CLI failed with exit code ${code}`));
+            }
+        });
+
     });
 }
 
