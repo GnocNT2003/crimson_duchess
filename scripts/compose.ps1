@@ -6,15 +6,25 @@ param (
     [Parameter(Mandatory = $true, HelpMessage = "Docker Compose actions to perform. For example: 'up', 'down', 'build', etc.")]
     [string]$Action,
 
+    # Infisical environment
+    [Parameter(Mandatory = $false, HelpMessage = "Infisical environment slug name to fetch from. For example: 'dev', 'prod'.")]
+    [string]$Environment = "dev",
+
     # Additional options for Docker Compose
     [Parameter(Mandatory = $false, HelpMessage = "Additional options for Docker Compose. For example: '-d' for detached mode.")]
     [string[]]$Options
 )
 
-$ComposeFilePath = Join-Path -Path $PSScriptRoot -ChildPath "..\docker-compose.dev.yml"
+if ($Environment -eq "dev") {
+    $ComposeFilePath = Join-Path -Path $PSScriptRoot -ChildPath "..\docker-compose.dev.yml"
+}
+else {
+    $ComposeFilePath = Join-Path -Path $PSScriptRoot -ChildPath "..\docker-compose.yml"
+}
+
 if (-Not (Test-Path -Path $ComposeFilePath)) {
     Write-Error "Docker Compose file not found at path: $ComposeFilePath"
     exit 1
 }
 
-& infisical.exe run --env=dev --path=/MongoDB --path=/Discord -- docker compose -f $ComposeFilePath $Action @Options
+& infisical.exe run --env=$Environment --path=/MongoDB --path=/Discord -- docker compose -f $ComposeFilePath $Action @Options

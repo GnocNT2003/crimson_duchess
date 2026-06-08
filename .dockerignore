@@ -17,15 +17,25 @@ temp
 *.md
 yt-dlp/helpYT_DLP.txt
 
-# Development files
+# Development
 .env.example
+scripts
+src/test
+
+# Docker files
+Dockerfile
+docker-compose.dev.yml
+docker-compose.yml
 
 # Git files
 .git
 .gitignore
 
+# Infisical (secret inject through environment instead of directly inside Dockerfile)
+.infisical.json
+
 # Legacy folders
 nginx
 mitmproxy
-yt-dlp/helpYT.py
+yt-dlp
 

@@ -51,19 +51,12 @@ FROM base
 #     useradd -g discord -u 1001 discord && \
 #     chown -R discord:discord /app
 
-# Install Python for yt-dlp
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-venv \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+    -o /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp \
+    && apt-get purge -y curl ca-certificates && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
-
-# Copy yt-dlp scripts
-COPY ./yt-dlp/downloadYT.py ./yt-dlp/downloadYT.py
-COPY ./yt-dlp/requirements.txt ./yt-dlp/requirements.txt
-
-# Create venv with system Python and install dependencies
-RUN python3 -m venv ./yt-dlp/.venv && \
-    ./yt-dlp/.venv/bin/pip install --no-cache-dir -r ./yt-dlp/requirements.txt
 
 # Copy runtime dependencies
 COPY --from=deps /app/node_modules ./node_modules
