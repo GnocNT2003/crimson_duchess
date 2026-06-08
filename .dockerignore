@@ -1,9 +1,9 @@
 # node_modules and dist directories
-node_modules/
-dist/
+node_modules
+dist
 
 # Python virtual environments
-.venv/
+.venv
 
 # Downloads and temporary files
 downloads

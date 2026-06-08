@@ -60,7 +60,9 @@ export async function downloadAudioFromYTbyWeb(url: string, downloadDir: string,
 
 export async function downloadAudioFromYTbyScript(url: string, downloadDir: string, logger: Logger): Promise<{filePath: string, title: string}> {
     const ytDlpScriptPath = __projectRoot + '/yt-dlp/downloadYT.py';
-    const pythonExecutablePath = __projectRoot + '/yt-dlp/.venv/Scripts/python.exe';
+    const pythonExecutablePath = process.platform === 'win32'
+        ? __projectRoot + '/yt-dlp/.venv/Scripts/python.exe'
+        : __projectRoot + '/yt-dlp/.venv/bin/python';
     return new Promise((resolve, reject) => {
         const pyDownloader = spawn(pythonExecutablePath, [ytDlpScriptPath]);
         let filePath: string = '';
@@ -106,7 +108,7 @@ export async function downloadAudioFromYTbyScript(url: string, downloadDir: stri
         });
 
         pyDownloader.on('close', (code) => {
-            if (code != 1) {
+            if (code !== 1) {
                 resolve({filePath, title});
             } else {
                 logger.log(`Python script exited with code ${code}`);

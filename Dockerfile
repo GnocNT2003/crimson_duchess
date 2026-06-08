@@ -42,27 +42,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm run build
 
 # ========================================
-# Python Dependencies Stage
-# ========================================
-FROM python:3.14.4-slim AS python-deps
-
-# Python yt-dlp working dir
-WORKDIR /app/yt-dlp
-
-# Copy yt-dlp requirements
-COPY ./yt-dlp/requirements.txt .
-
-# Create a virtual environment for yt-dlp
-RUN python3 -m venv .venv
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Install Python packages inside the virtual environment
-RUN pip install --no-cache-dir -r requirements.txt
-
-# ========================================
 # Production Stage
 # ========================================
 FROM base
+
+# Install Python for yt-dlp
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-venv \
+    && rm -rf /var/lib/apt/lists/*
 
 # # Create non-root group and user for extra security
 # RUN groupadd -g 1001 discord && \
@@ -75,8 +63,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./
 COPY --from=build /app/pnpm-*.yaml ./
-# Copy python dependencies
-COPY --from=python-deps /app/yt-dlp/.venv ./yt-dlp/.venv
+
+# Copy yt-dlp scripts
+COPY ./yt-dlp/downloadYT.py ./yt-dlp/downloadYT.py
+COPY ./yt-dlp/requirements.txt ./yt-dlp/requirements.txt
+
+# Create venv with system Python and install dependencies
+RUN python3 -m venv ./yt-dlp/.venv && \
+    ./yt-dlp/.venv/bin/pip install --no-cache-dir -r ./yt-dlp/requirements.txt
 
 # Set optimized environment variables
 ENV NODE_ENV=production
