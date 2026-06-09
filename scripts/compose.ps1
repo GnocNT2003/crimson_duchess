@@ -1,5 +1,6 @@
 # This script is used to start the development environment using Docker Compose.
-# It will build and run the containers defined in the docker-compose.dev.yml file.
+# It will build and run the containers defined in the respective compose file.
+# Environment variables are injected through Infisical CLI.
 [CmdletBinding()]
 param (
     # Docker Compose actions

@@ -1,17 +1,17 @@
 # node_modules and dist directories
-node_modules/
-dist/
+node_modules
+dist
 
 # Python virtual environments
-.venv/
+.venv
 
 # Environment variables
 .env
 *.js.map
 
 # Downloads and temporary files
-downloads/
-temp/
+downloads
+temp
 
 # Archives and logs
 *.zip
