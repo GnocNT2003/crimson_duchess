@@ -44,7 +44,10 @@ RUN pnpm run build
 # ========================================
 # Production Stage
 # ========================================
-FROM base
+FROM node:24.15.0-alpine3.23 AS prod
+
+# Go to working directory
+WORKDIR /app
 
 # # Create non-root group and user for extra security
 # RUN groupadd -g 1001 discord && \
@@ -59,8 +62,6 @@ RUN wget https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_mu
 COPY --from=deps /app/node_modules ./node_modules
 # Copy build bundle
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json ./
-COPY --from=build /app/pnpm-*.yaml ./
 
 # Set optimized environment variables
 ENV NODE_ENV=production
@@ -69,4 +70,5 @@ ENV NODE_ENV=production
 # USER discord
 
 # Run application
-CMD [ "pnpm", "start-all" ]
+CMD ["sh", "-c", "node dist/registerCommands.js && node dist/index.js"]
+# CMD [ "pnpm", "start-all" ]
