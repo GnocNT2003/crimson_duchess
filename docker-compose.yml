@@ -1,11 +1,8 @@
 services:
   crimson-duchess:
-    image: crimson-duchess:1.0.0
+    image: ghcr.io/gnocnt2003/crimson-duchess:latest
     container_name: crimson-duches
     restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile
     ports:
       - ${PORT}:${PORT}
     expose:
