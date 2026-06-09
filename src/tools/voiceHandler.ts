@@ -18,7 +18,7 @@ const { defaultVoiceChannelId } = config.discord;
 
 export function getOrJoinVoiceChannel(guild: Guild): VoiceConnection {
     let connection = getVoiceConnection(guild.id);
-    if (connection) return connection
+    if (connection) return connection;
 
     connection = joinVoiceChannel({
             channelId: defaultVoiceChannelId,
@@ -101,14 +101,14 @@ export function initializeAudioPlayer(connection: VoiceConnection, guild?: Guild
 
                 if (currentIndex === musicQueue.length - 1) {
                     console.log('No more items in queue, stopping playback');
-                    return player;
                 }
-
-                const nextItem = musicQueue[currentIndex + 1];
-                console.log(`Next item in queue: ${nextItem.title}, starting playback`);
-                nextItem.status = QueueItemStatus.Playing;
-                const resource = createAudioResource(nextItem.filePath);
-                player.play(resource);
+                else {
+                    const nextItem = musicQueue[currentIndex + 1];
+                    console.log(`Next item in queue: ${nextItem.title}, starting playback`);
+                    nextItem.status = QueueItemStatus.Playing;
+                    const resource = createAudioResource(nextItem.filePath);
+                    player.play(resource);
+                }
             }
         });
     }
