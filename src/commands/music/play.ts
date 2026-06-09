@@ -20,7 +20,23 @@ function joinChannelAndStreamMusic(musicItem: QueueItem, guild: Guild) {
 
     logger.log(`Creating or getting audio player for streaming from file: ${musicItem.filePath}`);
     const {player, isCreated} = initializeAudioPlayer(connection, guild);
-    if (isCreated) logger.log('New audio was created!')
+
+    // Handle between new audio and already created audio
+    const musicQueue = guild.client.queue;
+    if (isCreated) {
+        logger.log('New audio was created!');
+    }
+    else {
+        // Get the current playing music
+        const { item: currentItem } = getMusicInQueue(musicQueue, 'status', QueueItemStatus.Playing);
+
+        // Check if the new played music is the same as the currently playing one
+        if (currentItem) {
+            if (currentItem.title !== musicItem.title && currentItem.filePath !== musicItem.filePath && currentItem.url !== musicItem.url) {
+                currentItem.status = QueueItemStatus.Ready;
+            }
+        }
+    }
     
     try {
         logger.log('Creating audio resource')
@@ -143,7 +159,7 @@ const playCommand: Command = {
         const focusedValue = interaction.options.getFocused().toString();
         const musicQueue = interaction.client.queue;
         const choices = musicQueue.map(item => item.title);
-        const filtered = choices.filter((choice) => choice.startsWith(focusedValue)).slice(0, 5);
+        const filtered = choices.filter((choice) => choice.includes(focusedValue));
         await interaction.respond(filtered.map((choice) => ({ name: choice, value: choice })));
     },
 };

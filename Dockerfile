@@ -46,16 +46,17 @@ RUN pnpm run build
 # ========================================
 FROM base
 
-# Install Python for yt-dlp
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    python3-venv \
-    && rm -rf /var/lib/apt/lists/*
-
 # # Create non-root group and user for extra security
 # RUN groupadd -g 1001 discord && \
 #     useradd -g discord -u 1001 discord && \
 #     chown -R discord:discord /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+    -o /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp \
+    && apt-get purge -y curl ca-certificates && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy runtime dependencies
 COPY --from=deps /app/node_modules ./node_modules
@@ -63,14 +64,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package.json ./
 COPY --from=build /app/pnpm-*.yaml ./
-
-# Copy yt-dlp scripts
-COPY ./yt-dlp/downloadYT.py ./yt-dlp/downloadYT.py
-COPY ./yt-dlp/requirements.txt ./yt-dlp/requirements.txt
-
-# Create venv with system Python and install dependencies
-RUN python3 -m venv ./yt-dlp/.venv && \
-    ./yt-dlp/.venv/bin/pip install --no-cache-dir -r ./yt-dlp/requirements.txt
 
 # Set optimized environment variables
 ENV NODE_ENV=production

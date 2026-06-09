@@ -1,5 +1,5 @@
 import type { Guild } from "discord.js";
-import { downloadAudioFromYTbyScript } from "./youtubeHandler.js";
+import { downloadAudioFromYTbyCLI } from "./youtubeHandler.js";
 import type { Logger } from "./logging.js";
 import { QueueItemStatus, type QueueItem } from "../types/queueTypes.js";
 
@@ -32,7 +32,7 @@ export async function queueAndDownloadMusic(
 
     if (!existingItem) {
             logger.log(`Downloading audio from URL: ${url}`);
-            ({filePath, title } = await downloadAudioFromYTbyScript(url, downloadDir, logger));
+            ({filePath, title } = await downloadAudioFromYTbyCLI(url, downloadDir, logger));
             const newQueueItem: QueueItem = { url, title, filePath, status: QueueItemStatus.Ready };
 
             musicQueue.push(newQueueItem);
