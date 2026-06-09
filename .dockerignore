@@ -1,0 +1,31 @@
+# node_modules and dist directories
+node_modules
+dist
+
+# Python virtual environments
+.venv
+
+# Downloads and temporary files
+downloads
+temp
+
+# Archives and logs
+*.zip
+*.log
+
+# Documentations
+*.md
+yt-dlp/helpYT_DLP.txt
+
+# Development files
+.env.example
+
+# Git files
+.git
+.gitignore
+
+# Legacy folders
+nginx
+mitmproxy
+yt-dlp/helpYT.py
+

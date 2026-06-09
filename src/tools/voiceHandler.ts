@@ -18,7 +18,7 @@ const { defaultVoiceChannelId } = config.discord;
 
 export function getOrJoinVoiceChannel(guild: Guild): VoiceConnection {
     let connection = getVoiceConnection(guild.id);
-    if (connection) return connection
+    if (connection) return connection;
 
     connection = joinVoiceChannel({
             channelId: defaultVoiceChannelId,
