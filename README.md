@@ -19,7 +19,7 @@ A Discord music bot for the **Mấy con chó đỏ** server. Streams and plays Y
 ### Music
 
 | Command | Description |
-|---|---|
+| --- | --- |
 | `/play youtube <url>` | Stream audio from a YouTube URL directly |
 | `/play queue <name>` | Play a track from the download queue (with autocomplete) |
 | `/play-download <videoname>` | Play a previously downloaded track (with autocomplete) |
@@ -32,7 +32,7 @@ A Discord music bot for the **Mấy con chó đỏ** server. Streams and plays Y
 ### Utility
 
 | Command | Description |
-|---|---|
+| --- | --- |
 | `/help` | List all available commands |
 | `/ping` | Check bot latency |
 
