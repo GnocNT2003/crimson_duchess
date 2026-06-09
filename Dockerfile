@@ -49,11 +49,6 @@ FROM node:24.15.0-alpine3.23 AS prod
 # Go to working directory
 WORKDIR /app
 
-# # Create non-root group and user for extra security
-# RUN groupadd -g 1001 discord && \
-#     useradd -g discord -u 1001 discord && \
-#     chown -R discord:discord /app
-
 RUN wget https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_musllinux \
     -O /usr/local/bin/yt-dlp \
     && chmod a+rx /usr/local/bin/yt-dlp
@@ -66,8 +61,10 @@ COPY --from=build /app/dist ./dist
 # Set optimized environment variables
 ENV NODE_ENV=production
 
-# # Switch to non-root user for security
-# USER discord
+# Switch to non-root user for security
+RUN mkdir -p /app/downloads/musics /app/downloads/laws /app/temp \
+    && chown -R node:node /app/downloads /app/temp
+USER node
 
 # Run application
 CMD ["sh", "-c", "node dist/registerCommands.js && node dist/index.js"]

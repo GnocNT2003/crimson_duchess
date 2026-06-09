@@ -15,7 +15,6 @@ temp
 
 # Documentations
 *.md
-yt-dlp/helpYT_DLP.txt
 
 # Development
 .env.example
