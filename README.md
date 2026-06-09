@@ -1,5 +1,7 @@
 # Crimson Duchess
 
+**English** | [Tiếng Việt](README.vi.md)
+
 A Discord music bot for the **Mấy con chó đỏ** server. Streams and plays YouTube audio in voice channels, with support for downloading and queueing tracks.
 
 ---

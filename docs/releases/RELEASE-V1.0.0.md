@@ -1,5 +1,7 @@
 # Release v1.0.0
 
+**English** | [Tiếng Việt](RELEASE-V1.0.0.vi.md)
+
 **Release date:** 2026-06-09
 
 First stable release of Crimson Duchess — a Discord music bot for the **Mấy con chó đỏ** server.
@@ -41,7 +43,7 @@ An Express HTTP server runs alongside the bot and exposes `GET /api/health` for 
 
 #### `/play youtube <url>`
 
-Streams audio from a YouTube video URL. The video is downloaded to a temporary directory and played immediately. Only standard YouTube video URLs are accepted (playlists and channel links are rejected).
+Streams audio from a YouTube video URL. The video is downloaded to a temporary directory and played immediately. Playlist URLs are accepted — only the current video in the URL is extracted and played, not the entire playlist. Channel links are rejected.
 
 #### `/play queue <name>`
 
