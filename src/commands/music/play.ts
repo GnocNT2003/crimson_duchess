@@ -159,7 +159,7 @@ const playCommand: Command = {
         const focusedValue = interaction.options.getFocused().toString();
         const musicQueue = interaction.client.queue;
         const choices = musicQueue.map(item => item.title);
-        const filtered = choices.filter((choice) => choice.includes(focusedValue));
+        const filtered = choices.filter((choice) => choice.includes(focusedValue)).slice(0, 15);
         await interaction.respond(filtered.map((choice) => ({ name: choice, value: choice })));
     },
 };

@@ -1,7 +1,7 @@
 # ========================================
 # Base Stage
 # ========================================
-FROM node:24.15.0-slim AS base
+FROM node:24.15.0-alpine3.23 AS base
 
 # Set pnpm environment variables
 ENV PNPM_HOME="/pnpm"
@@ -44,32 +44,28 @@ RUN pnpm run build
 # ========================================
 # Production Stage
 # ========================================
-FROM base
+FROM node:24.15.0-alpine3.23 AS prod
 
-# # Create non-root group and user for extra security
-# RUN groupadd -g 1001 discord && \
-#     useradd -g discord -u 1001 discord && \
-#     chown -R discord:discord /app
+# Go to working directory
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
-    && curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
-    -o /usr/local/bin/yt-dlp \
-    && chmod a+rx /usr/local/bin/yt-dlp \
-    && apt-get purge -y curl ca-certificates && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
+RUN wget https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_musllinux \
+    -O /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp
 
 # Copy runtime dependencies
 COPY --from=deps /app/node_modules ./node_modules
 # Copy build bundle
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/package.json ./
-COPY --from=build /app/pnpm-*.yaml ./
 
 # Set optimized environment variables
 ENV NODE_ENV=production
 
-# # Switch to non-root user for security
-# USER discord
+# Switch to non-root user for security
+RUN mkdir -p /app/downloads/musics /app/downloads/laws /app/temp \
+    && chown -R node:node /app/downloads /app/temp
+USER node
 
 # Run application
-CMD [ "pnpm", "start-all" ]
+CMD ["sh", "-c", "node dist/registerCommands.js && node dist/index.js"]
+# CMD [ "pnpm", "start-all" ]
