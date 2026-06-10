@@ -3,7 +3,9 @@ import type { ChatInputCommandInteraction } from "discord.js";
 import type Command from "../../types/commandTypes.js";
 import { createLogger } from "../../tools/logging.js";
 import { getMusicDownloadsDir } from "../../tools/filePathResolver.js";
-import { downloadAudioFromYTbyCLI } from "../../tools/youtubeHandler.js";
+import { extractYoutubeUrl } from "../../tools/youtubeHandler.js";
+import { YoutubeUrlType } from "../../types/youtubeUrlTypes.js";
+import { queueAndDownloadMusic } from "../../tools/queueHandler.js";
 
 const logger = createLogger("download");
 
@@ -19,23 +21,16 @@ const downloadCommand: Command = {
         ) as SlashCommandBuilder,
 
     async execute(interaction: ChatInputCommandInteraction) {
-        const url = interaction.options.getString('url', true);
+        let url = interaction.options.getString('url', true);
+        const downloadsDir = getMusicDownloadsDir();
 
         logger.sep();
         logger.log(`START DOWNLOAD`);
 
         try {
-            const hostname = new URL(url).hostname;
-            // logger.log(`Parsed hostname from URL: ${hostname}`);
-            if (!hostname.includes('youtube')) {
-                logger.log(`Invalid hostname: ${hostname}. Required Youtube url.`);
-                await interaction.reply({content: 'Invalid hostname. Required Youtube url.',
-                    flags: MessageFlags.Ephemeral
-                });
-                return;
-            };
-        } catch {
-            logger.log(`Invalid URL provided: ${url}`);
+            url = extractYoutubeUrl(url, YoutubeUrlType.Video); 
+        } catch (error) {
+            logger.log(`Invalid URL provided: ${String(error)}`);
             await interaction.reply({content: 'Invalid URL provided.', 
                 flags: MessageFlags.Ephemeral
             });
@@ -45,14 +40,18 @@ const downloadCommand: Command = {
         await interaction.deferReply();
 
         try {
-            const downloadsDir = getMusicDownloadsDir();
-            // const filename = await downloadAudioFromYTbyWeb(url, downloadsDir, logger);
-            const { filePath } = await downloadAudioFromYTbyCLI(url, downloadsDir, logger);
-            await interaction.editReply(`Audio downloaded successfully: \`${filePath}\``);
+            if (!interaction.guild) {
+                logger.log('No guild found in interaction');
+                await interaction.editReply('This command can only be used in a server.');
+                return;
+            }
+            
+            await queueAndDownloadMusic(url, interaction.guild, downloadsDir, logger);
+            await interaction.editReply(`The audio for URL: \`${url}\` has been added to the queue.`);
         } catch (error) {
-            logger.log(`Error while trying to download audio: ${String(error)}`);
+            logger.log(`Error while trying to play music: ${String(error)}`);
             await interaction.editReply(
-                `Failed to download audio: ${error instanceof Error ? error.message : String(error)}`,
+                'An error occurred while playing the music.'
             );
         }
     },
