@@ -10,6 +10,7 @@
     "start:dev-build": "pnpm build && pnpm start:dev",
     "start-all": "pnpm register && pnpm start",
     "start-all:dev": "pnpm register:dev && pnpm start:dev",
+    "start-all:dev-build": "pnpm build && pnpm register:dev && pnpm start:dev",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "register": "node dist/registerCommands.js",

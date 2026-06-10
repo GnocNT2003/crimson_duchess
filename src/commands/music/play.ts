@@ -5,11 +5,12 @@ import { createLogger } from "../../tools/logging.js";
 import { initializeAudioPlayer, getOrJoinVoiceChannel } from "../../tools/voiceHandler.js";
 import { createAudioResource } from "@discordjs/voice";
 import { extractYoutubeUrl } from "../../tools/youtubeHandler.js";
-import { getTempDownloadDir } from "../../tools/filePathResolver.js";
+import { getMusicDownloadsDir, getMusicDownloadsFiles, getTempDownloadDir } from "../../tools/filePathResolver.js";
 import { YoutubeUrlType } from "../../types/youtubeUrlTypes.js";
 import { getMusicInQueue, queueAndDownloadMusic } from "../../tools/queueHandler.js";
 import { QueueItemStatus, type QueueItem } from "../../types/queueTypes.js";
-// import path from "path";
+import fs from "fs";
+import path from "path";
 
 const logger = createLogger("play");
 
@@ -62,7 +63,7 @@ function joinChannelAndStreamMusic(musicItem: QueueItem, guild: Guild) {
 const playCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('play')
-        .setDescription('Play server background music')
+        .setDescription('Play server background music from multiple sources')
         .addSubcommand((subcommand) =>
             subcommand
                 .setName('youtube')
@@ -85,6 +86,18 @@ const playCommand: Command = {
                         .setRequired(true)
                         .setAutocomplete(true),
                 )
+        )
+        .addSubcommand((subcommand) =>
+            subcommand
+                .setName('download')
+                .setDescription('Play music from downloaded YT video options')
+                .addStringOption((option) => 
+                    option
+                        .setName('name')
+                        .setDescription('The name and file path of the download music to play. Should include extension.')
+                        .setRequired(true)
+                        .setAutocomplete(true),
+                )
         ) as SlashCommandBuilder,
 
     async execute(interaction: ChatInputCommandInteraction) {
@@ -104,23 +117,7 @@ const playCommand: Command = {
         // let filePath: string = '';
         let musicItem: QueueItem;
 
-        if (subcommand === 'queue') {
-            const filename = interaction.options.getString('name', true).trim();
-
-            const musicQueue = interaction.guild.client.queue;
-            const { item: existingItem } = getMusicInQueue(musicQueue, 'title', filename);
-            if (!existingItem) {
-                logger.log(`No music found in queue with title: ${filename}`);
-                await interaction.reply({
-                    content: `No music found in queue with title: \`${filename}\``, 
-                    flags: MessageFlags.Ephemeral
-                });
-                return;
-            }
-            musicItem = existingItem;
-            // filePath = existingItem?.filePath as string;
-
-        } else {
+        if (subcommand === 'youtube') {
             let url = interaction.options.getString('url', true).trim() || '';
             const tempDownloadDir = getTempDownloadDir();
             
@@ -137,6 +134,43 @@ const playCommand: Command = {
             // const { filePath: fileDownloadPath } = await queueAndDownloadMusic(url, interaction.guild, tempDownloadDir, logger);
             musicItem = await queueAndDownloadMusic(url, interaction.guild, tempDownloadDir, logger);
             // filePath = fileDownloadPath;
+        }
+        else {
+            const filename = interaction.options.getString('name', true).trim();
+            const musicQueue = interaction.guild.client.queue;
+
+            if (subcommand === 'queue') {
+                const { item: existingItem } = getMusicInQueue(musicQueue, 'title', filename);
+                if (!existingItem) {
+                    logger.log(`No music found in queue with title: ${filename}`);
+                    await interaction.reply({
+                        content: `No music found in queue with title: \`${filename}\``, 
+                        flags: MessageFlags.Ephemeral
+                    });
+                    return;
+                }
+                musicItem = existingItem;
+            }
+            else { // subcommand === 'download'
+                const musicDownloadDir = getMusicDownloadsDir();
+                const filePath = path.join(musicDownloadDir, filename);
+                if (!fs.existsSync(filePath)) {
+                    logger.log(`No audio file found in download with name: ${filename}`);
+                    await interaction.reply({
+                        content: `No audio file found in download with name: \`${filename}\``, 
+                        flags: MessageFlags.Ephemeral
+                    });
+                    return;
+                };
+                musicItem = {
+                    url: filePath,
+                    title: filename,
+                    filePath: filePath,
+                    status: QueueItemStatus.Ready
+                };
+                musicQueue.push(musicItem);
+            }
+            // filePath = existingItem?.filePath as string;
         }
         
         try {
@@ -156,11 +190,24 @@ const playCommand: Command = {
     },
 
     async autocomplete(interaction: AutocompleteInteraction) {
+        const subcommand = interaction.options.getSubcommand();
+        logger.log('Command name in autocomple: ' + subcommand);
         const focusedValue = interaction.options.getFocused().toString();
         const musicQueue = interaction.client.queue;
-        const choices = musicQueue.map(item => item.title);
-        const filtered = choices.filter((choice) => choice.includes(focusedValue)).slice(0, 15);
-        await interaction.respond(filtered.map((choice) => ({ name: choice, value: choice })));
+
+        let filtered: string[];
+        let suggestion: {name: string, value: string}[];
+        if (subcommand === 'queue') {
+            const choices = musicQueue.map(item => item.title);
+            filtered = choices.filter((choice) => choice.includes(focusedValue)).slice(0, 10);
+            suggestion = filtered.map((choice) => ({ name: choice, value: choice }));
+        }
+        else {
+            const choices = getMusicDownloadsFiles();
+		    filtered = choices.filter((choice) => choice.includes(focusedValue)).slice(0, 10);
+            suggestion = filtered.map((choice) => ({ name: choice.replace(/\.[^./]+$/, ''), value: choice }));
+        }
+        await interaction.respond(suggestion);
     },
 };
 

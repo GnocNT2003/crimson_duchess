@@ -12,7 +12,7 @@ const logger = createLogger("queue");
 const queueCommand: Command = {
     data: new SlashCommandBuilder()
         .setName('queue')
-        .setDescription('Queue music from Youtube URL')
+        .setDescription('Queue and download music from Youtube URL')
         .addStringOption((option) => 
             option
                 .setName('url')
